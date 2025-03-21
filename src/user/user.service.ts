@@ -1,0 +1,75 @@
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { User as UserModel } from '@prisma/client';
+import { PrismaService } from 'src/prisma.service';
+
+@Injectable()
+export class UserService {
+  constructor(private readonly prismaService: PrismaService) {}
+  async getAllUser(): Promise<UserModel[]> {
+    return await this.prismaService.user.findMany();
+  }
+
+  async addUser(
+    email: string,
+    password: string,
+    username: string,
+  ): Promise<string> {
+    try {
+      const user = await this.prismaService.user.create({
+        data: {
+          email,
+          password,
+          username,
+        },
+      });
+      console.log('user', user);
+
+      return 'User created successfully';
+    } catch (error: any) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async findUser(
+    email: string,
+    pass: string,
+  ): Promise<
+    | {
+        password: string;
+        id: number;
+        username: string;
+        email: string;
+      }
+    | null
+    | undefined
+  > {
+    try {
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          email,
+        },
+      });
+
+      if (!user) {
+        throw new NotFoundException();
+      }
+
+      if (user.password !== pass) {
+        throw new UnauthorizedException();
+      }
+
+      // const { password, ...result } = user;
+      // TODO: Generate a JWT and return it here
+      // instead of the user object
+      return user;
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+}
