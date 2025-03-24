@@ -35,4 +35,5 @@ model Event {
   event_category_id Int
   creator           User          @relation(fields: [creator_id], references: [id])
   creator_id        Int
+  image_url         String
 }

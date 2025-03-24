@@ -5,9 +5,16 @@ import { PrismaService } from './prisma.service';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { EventModule } from './event/event.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
-  imports: [AuthModule, UserModule, EventModule],
+  imports: [
+    AuthModule,
+    UserModule,
+    EventModule,
+    ServeStaticModule.forRoot({ rootPath: join(__dirname, '..') }),
+  ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })
