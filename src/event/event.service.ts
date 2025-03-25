@@ -7,6 +7,11 @@ import {
   UpdateEventBodyType,
 } from './type/event.type';
 
+interface AllEventType {
+  list: EventModel[];
+  totalCount: number;
+}
+
 @Injectable()
 export class EventService {
   constructor(private readonly prismaService: PrismaService) {}
@@ -15,20 +20,28 @@ export class EventService {
     pageNumber: string,
     pageSize: string,
     searchQuery: string,
-  ): Promise<EventModel[]> {
+  ): Promise<AllEventType> {
     const skip = (+Number(pageNumber) - 1) * +Number(pageSize);
     console.log('skip', skip);
     const take = Number(pageSize);
-    const events = await this.prismaService.event.findMany({
-      skip,
-      take,
-      where: {
-        name: {
-          contains: searchQuery ? searchQuery : undefined,
-        },
+    const whereQuery = {
+      name: {
+        contains: searchQuery ? searchQuery : undefined,
       },
-    });
-    return events;
+    };
+
+    const [list, totalCount] = await this.prismaService.$transaction([
+      this.prismaService.event.findMany({
+        skip,
+        take,
+        where: whereQuery,
+      }),
+      this.prismaService.event.count(),
+    ]);
+    return {
+      list,
+      totalCount,
+    };
   }
 
   async addEvent(
@@ -78,7 +91,7 @@ export class EventService {
       const data = {};
 
       if (details.date) {
-        data['event_date'] = details.date;
+        data['event_date'] = new Date(details.date);
       }
       if (details.name) {
         data['name'] = details.name;
