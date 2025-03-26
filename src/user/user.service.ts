@@ -53,6 +53,7 @@ export class UserService {
       const user = await this.prismaService.user.findUnique({
         where: {
           email,
+          password: pass,
         },
       });
 

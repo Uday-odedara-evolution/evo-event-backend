@@ -36,8 +36,16 @@ export class EventController {
     @Query('pageSize') pageSize: string,
     @Query('pageNumber') pageNumber: string,
     @Query('searchQuery') searchQuery: string,
+    @Query('creatorId') creatorId: string,
+    @Query('filters') filters: string,
   ): Promise<any> {
-    return this.eventService.getAllEvents(pageNumber, pageSize, searchQuery);
+    return this.eventService.getAllEvents(
+      pageNumber,
+      pageSize,
+      searchQuery,
+      creatorId,
+      filters,
+    );
   }
 
   @Public()

@@ -20,23 +20,33 @@ export class EventService {
     pageNumber: string,
     pageSize: string,
     searchQuery: string,
+    creatorId: string,
+    filters: string,
   ): Promise<AllEventType> {
     const skip = (+Number(pageNumber) - 1) * +Number(pageSize);
-    console.log('skip', skip);
     const take = Number(pageSize);
     const whereQuery = {
       name: {
         contains: searchQuery ? searchQuery : undefined,
       },
+      creator_id: Number(creatorId),
     };
 
+    if (filters) {
+      const filterArr = filters.split(',').map((val) => Number(val));
+      whereQuery['event_category_id'] = { in: filterArr };
+    }
+
+    console.log('whereQuery', whereQuery);
     const [list, totalCount] = await this.prismaService.$transaction([
       this.prismaService.event.findMany({
         skip,
         take,
         where: whereQuery,
       }),
-      this.prismaService.event.count(),
+      this.prismaService.event.count({
+        where: whereQuery,
+      }),
     ]);
     return {
       list,

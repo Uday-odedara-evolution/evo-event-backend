@@ -8,16 +8,19 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDTO } from './dto/user.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
+  @Public()
   @Get()
   getAllUsers(): any {
     return this.userService.getAllUser();
   }
 
+  @Public()
   @Post()
   addUser(@Body() userData: CreateUserDTO): any {
     try {
