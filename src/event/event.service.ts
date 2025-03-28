@@ -6,6 +6,7 @@ import {
   EventType,
   UpdateEventBodyType,
 } from './type/event.type';
+import { getFirstAndLastDateOfMonth } from 'src/utils/utilities';
 
 interface AllEventType {
   list: EventModel[];
@@ -31,6 +32,7 @@ export class EventService {
     filters: string,
     sortName: 'asc' | 'desc',
     sortDate: 'asc' | 'desc',
+    dateFilters: string,
   ): Promise<AllEventType> {
     const skip = (+Number(pageNumber) - 1) * +Number(pageSize);
     const take = Number(pageSize);
@@ -48,6 +50,28 @@ export class EventService {
 
     if (sortName) {
       orderBy.push({ name: sortName });
+    }
+
+    if (dateFilters) {
+      const datesArr = dateFilters.split(',').map((val) => Number(val));
+
+      if (datesArr.includes(1)) {
+        const [firstDay, lastDay] = getFirstAndLastDateOfMonth(1);
+        console.log('lastDay', lastDay);
+        console.log('firstDay', firstDay);
+        whereQuery['event_date'] = {
+          lte: new Date(lastDay).toISOString(),
+          gte: new Date(firstDay).toISOString(),
+        };
+      } else if (datesArr.includes(2)) {
+        const [firstDay, lastDay] = getFirstAndLastDateOfMonth(6);
+        console.log('lastDay', lastDay);
+        console.log('firstDay', firstDay);
+        whereQuery['event_date'] = {
+          lte: new Date(lastDay).toISOString(),
+          gte: new Date().toISOString(),
+        };
+      }
     }
 
     if (filters) {

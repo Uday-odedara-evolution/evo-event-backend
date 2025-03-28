@@ -38,6 +38,7 @@ export class EventController {
     @Query('searchQuery') searchQuery: string,
     @Query('creatorId') creatorId: string,
     @Query('filters') filters: string,
+    @Query('dFilters') dFilters: string,
     @Query('sortName') sortName: 'asc' | 'desc',
     @Query('sortDate') sortDate: 'asc' | 'desc',
   ): Promise<any> {
@@ -49,6 +50,7 @@ export class EventController {
       filters,
       sortName,
       sortDate,
+      dFilters,
     );
   }
 
