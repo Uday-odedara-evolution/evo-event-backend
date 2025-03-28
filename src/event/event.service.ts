@@ -12,6 +12,13 @@ interface AllEventType {
   totalCount: number;
 }
 
+interface SortDate {
+  event_date: 'asc' | 'desc';
+}
+interface SortName {
+  name: 'asc' | 'desc';
+}
+
 @Injectable()
 export class EventService {
   constructor(private readonly prismaService: PrismaService) {}
@@ -22,6 +29,8 @@ export class EventService {
     searchQuery: string,
     creatorId: string,
     filters: string,
+    sortName: 'asc' | 'desc',
+    sortDate: 'asc' | 'desc',
   ): Promise<AllEventType> {
     const skip = (+Number(pageNumber) - 1) * +Number(pageSize);
     const take = Number(pageSize);
@@ -31,6 +40,15 @@ export class EventService {
       },
       creator_id: Number(creatorId),
     };
+    const orderBy: Array<SortDate | SortName> = [];
+
+    if (sortDate) {
+      orderBy.push({ event_date: sortDate });
+    }
+
+    if (sortName) {
+      orderBy.push({ name: sortName });
+    }
 
     if (filters) {
       const filterArr = filters.split(',').map((val) => Number(val));
@@ -43,9 +61,11 @@ export class EventService {
         skip,
         take,
         where: whereQuery,
+        orderBy: orderBy,
       }),
       this.prismaService.event.count({
         where: whereQuery,
+        orderBy: orderBy,
       }),
     ]);
     return {

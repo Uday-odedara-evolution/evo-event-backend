@@ -38,6 +38,8 @@ export class EventController {
     @Query('searchQuery') searchQuery: string,
     @Query('creatorId') creatorId: string,
     @Query('filters') filters: string,
+    @Query('sortName') sortName: 'asc' | 'desc',
+    @Query('sortDate') sortDate: 'asc' | 'desc',
   ): Promise<any> {
     return this.eventService.getAllEvents(
       pageNumber,
@@ -45,6 +47,8 @@ export class EventController {
       searchQuery,
       creatorId,
       filters,
+      sortName,
+      sortDate,
     );
   }
 
