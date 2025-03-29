@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { Event as EventModel } from '@prisma/client';
 import {
@@ -11,6 +11,7 @@ import {
   getFirstAndLastDateOfMonth,
 } from 'src/utils/utilities';
 import { RedisService } from 'src/redis/redis.service';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 interface AllEventType {
   list: EventModel[];
@@ -26,9 +27,12 @@ interface SortName {
 
 @Injectable()
 export class EventService {
+  // private readonly logger = new Logger(EventService.name);
   constructor(
     private readonly prismaService: PrismaService,
     private readonly redisService: RedisService,
+    @InjectPinoLogger(EventService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   async getAllEvents(
@@ -51,7 +55,8 @@ export class EventService {
       sortDate,
       dateFilters,
     });
-    console.log('searchQueryKey', searchQueryKey);
+    this.logger.error({ id: 'getAllEvents' }, 'get all events');
+    this.logger.info('This is an informational message');
     const skip = (+Number(pageNumber) - 1) * +Number(pageSize);
     const take = Number(pageSize);
     const whereQuery = {
