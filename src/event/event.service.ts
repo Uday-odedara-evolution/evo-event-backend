@@ -6,7 +6,11 @@ import {
   EventType,
   UpdateEventBodyType,
 } from './type/event.type';
-import { getFirstAndLastDateOfMonth } from 'src/utils/utilities';
+import {
+  createQueryKey,
+  getFirstAndLastDateOfMonth,
+} from 'src/utils/utilities';
+import { RedisService } from 'src/redis/redis.service';
 
 interface AllEventType {
   list: EventModel[];
@@ -22,7 +26,10 @@ interface SortName {
 
 @Injectable()
 export class EventService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async getAllEvents(
     pageNumber: string,
@@ -34,6 +41,17 @@ export class EventService {
     sortDate: 'asc' | 'desc',
     dateFilters: string,
   ): Promise<AllEventType> {
+    const searchQueryKey = createQueryKey({
+      pageNumber,
+      pageSize,
+      searchQuery,
+      creatorId,
+      filters,
+      sortName,
+      sortDate,
+      dateFilters,
+    });
+    console.log('searchQueryKey', searchQueryKey);
     const skip = (+Number(pageNumber) - 1) * +Number(pageSize);
     const take = Number(pageSize);
     const whereQuery = {
@@ -57,16 +75,13 @@ export class EventService {
 
       if (datesArr.includes(1)) {
         const [firstDay, lastDay] = getFirstAndLastDateOfMonth(1);
-        console.log('lastDay', lastDay);
-        console.log('firstDay', firstDay);
+
         whereQuery['event_date'] = {
           lte: new Date(lastDay).toISOString(),
           gte: new Date(firstDay).toISOString(),
         };
       } else if (datesArr.includes(2)) {
-        const [firstDay, lastDay] = getFirstAndLastDateOfMonth(6);
-        console.log('lastDay', lastDay);
-        console.log('firstDay', firstDay);
+        const [, lastDay] = getFirstAndLastDateOfMonth(6);
         whereQuery['event_date'] = {
           lte: new Date(lastDay).toISOString(),
           gte: new Date().toISOString(),
@@ -79,7 +94,13 @@ export class EventService {
       whereQuery['event_category_id'] = { in: filterArr };
     }
 
-    console.log('whereQuery', whereQuery);
+    const cashedEvents = await this.redisService.get('events', searchQueryKey);
+
+    if (cashedEvents) {
+      console.log('fetched from cache');
+      return JSON.parse(cashedEvents) as AllEventType;
+    }
+
     const [list, totalCount] = await this.prismaService.$transaction([
       this.prismaService.event.findMany({
         skip,
@@ -92,10 +113,20 @@ export class EventService {
         orderBy: orderBy,
       }),
     ]);
-    return {
+
+    const result = {
       list,
       totalCount,
     };
+    console.log('fetched from db');
+
+    await this.redisService.set(
+      'events',
+      searchQueryKey,
+      JSON.stringify(result),
+    );
+
+    return result;
   }
 
   async addEvent(

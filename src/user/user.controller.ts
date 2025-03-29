@@ -12,7 +12,7 @@ import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  constructor(private readonly userService: UserService) {}
 
   @Public()
   @Get()

@@ -7,12 +7,26 @@ import {
 } from '@nestjs/common';
 import { User as UserModel } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
   async getAllUser(): Promise<UserModel[]> {
-    return await this.prismaService.user.findMany();
+    const cachedUser = await this.redisService.get('users', 'all');
+    console.log('cachedUser', cachedUser);
+    if (cachedUser) {
+      return JSON.parse(cachedUser) as UserModel[];
+    }
+    const users = await this.prismaService.user.findMany();
+    console.log('users', users);
+
+    await this.redisService.set('users', 'all', JSON.stringify(users));
+
+    return users;
   }
 
   async addUser(

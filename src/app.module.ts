@@ -7,12 +7,14 @@ import { UserModule } from './user/user.module';
 import { EventModule } from './event/event.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
     AuthModule,
     UserModule,
     EventModule,
+    RedisModule,
     ServeStaticModule.forRoot({ rootPath: join(__dirname, '..') }),
   ],
   controllers: [AppController],

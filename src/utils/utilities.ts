@@ -15,3 +15,13 @@ export const getZeroPrefix = (val) => {
   const digit = Number(val);
   return digit > 9 ? `${digit}` : `0${digit}`;
 };
+
+export const createQueryKey = (obj: Record<string, any>) => {
+  let result = '';
+  Object.entries(obj).map(([key, value]) => {
+    if (value) {
+      result += `${key}:${value}-`;
+    }
+  });
+  return result;
+};
