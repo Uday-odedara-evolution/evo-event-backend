@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from 'src/user/user.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +21,6 @@ export class AuthService {
     data: { userId: number; username: string };
   }> {
     const user = await this.userService.findUser(email, password);
-    console.log('user', user);
     if (!user) {
       throw new NotFoundException('Check cred');
     }

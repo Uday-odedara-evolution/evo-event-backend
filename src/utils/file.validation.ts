@@ -1,8 +1,8 @@
-import { PipeTransform, Injectable, ArgumentMetadata } from '@nestjs/common';
+import { PipeTransform, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class FileValidationPipe implements PipeTransform {
-  transform(value: Record<string, any>, metadata: ArgumentMetadata) {
+  transform(value: Express.Multer.File) {
     const ALLOWED_TYPES = ['image/jpg', 'image/jpeg', 'image/png'];
 
     if (!value) return false;

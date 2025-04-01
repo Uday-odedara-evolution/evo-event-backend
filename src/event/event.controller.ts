@@ -21,10 +21,11 @@ import {
   createEventSchema,
   deleteEventSchema,
   updateEventSchema,
-} from './event.dto';
+} from './dto/event.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileValidationPipe } from 'src/utils/file.validation';
+import { ApiBody, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 @Controller('event')
 export class EventController {
@@ -32,21 +33,68 @@ export class EventController {
 
   @Public()
   @Get()
+  @ApiQuery({
+    name: 'searchQuery',
+    description: 'Event list including entered keywords',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({
+    name: 'filters',
+    description: 'Get the event list with specific event type',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({
+    name: 'dFilters',
+    description: 'Get the event list with specific date range',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({
+    name: 'sortDate',
+    description: 'Sort the list with asc and desc date',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({
+    name: 'sortName',
+    description: 'Sort the list with asc and desc name',
+    required: false,
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of user created events',
+    example: {
+      list: [
+        {
+          id: 5,
+          name: 'dancing concert',
+          event_date: '2025-04-03T00:00:00.000Z',
+          event_category_id: 2,
+          creator_id: 2,
+          image_url: '1742984214161-lala-azizli-SC9LreeZDj0-unsplash.jpg',
+        },
+      ],
+      totalCount: 13,
+    },
+  })
   getAllPost(
+    @Query('creatorId') creatorId: string,
     @Query('pageSize') pageSize: string,
     @Query('pageNumber') pageNumber: string,
-    @Query('searchQuery') searchQuery: string,
-    @Query('creatorId') creatorId: string,
-    @Query('filters') filters: string,
-    @Query('dFilters') dFilters: string,
-    @Query('sortName') sortName: 'asc' | 'desc',
-    @Query('sortDate') sortDate: 'asc' | 'desc',
+    @Query('searchQuery') searchQuery?: string,
+    @Query('filters') filters?: string,
+    @Query('dFilters') dFilters?: string,
+    @Query('sortName') sortName?: 'asc' | 'desc',
+    @Query('sortDate') sortDate?: 'asc' | 'desc',
   ): Promise<any> {
     return this.eventService.getAllEvents(
+      creatorId,
       pageNumber,
       pageSize,
       searchQuery,
-      creatorId,
       filters,
       sortName,
       sortDate,
@@ -57,6 +105,29 @@ export class EventController {
   @Public()
   @Post()
   @UseInterceptors(FileInterceptor('file'))
+  @ApiBody({
+    schema: {
+      example: {
+        name: 'name',
+        date: '2025-03-31',
+        categoryId: '1',
+        file: 'abc.jpg',
+        creatorId: '1',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Event is successfully created',
+    example: {
+      id: 18,
+      name: 'test 11',
+      event_date: '2025-03-31T00:00:00.000Z',
+      event_category_id: 1,
+      creator_id: 2,
+      image_url: '1743403897088-daryan-shamkhali-PACD5oSMko8-unsplash.jpg',
+    },
+  })
   addEvent(
     @Body(new ZodValidationPipe(createEventSchema))
     createEventDto: CreateEventDto,
@@ -71,6 +142,18 @@ export class EventController {
 
   @Public()
   @Delete(':id')
+  @ApiResponse({
+    status: 200,
+    description: 'Event is deleted',
+    example: {
+      id: 18,
+      name: 'test 11',
+      event_date: '2025-03-31T00:00:00.000Z',
+      event_category_id: 1,
+      creator_id: 2,
+      image_url: '1743403897088-daryan-shamkhali-PACD5oSMko8-unsplash.jpg',
+    },
+  })
   @UsePipes(new ZodValidationPipe(deleteEventSchema))
   deleteEvent(@Param('id') deleteEventDto: DeleteEventDto) {
     return this.eventService.deleteById(deleteEventDto);
@@ -78,6 +161,30 @@ export class EventController {
 
   @Public()
   @Put()
+  @ApiBody({
+    schema: {
+      example: {
+        id: '12',
+        name: 'name',
+        date: '2025-03-31',
+        categoryId: '1',
+        file: 'abc.jpg',
+        creatorId: '1',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Event is successfully created',
+    example: {
+      id: 18,
+      name: 'test 11',
+      event_date: '2025-03-31T00:00:00.000Z',
+      event_category_id: 1,
+      creator_id: 2,
+      image_url: '1743403897088-daryan-shamkhali-PACD5oSMko8-unsplash.jpg',
+    },
+  })
   @UseInterceptors(FileInterceptor('file'))
   updateEvent(
     @Body(new ZodValidationPipe(updateEventSchema))

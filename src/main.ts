@@ -23,10 +23,7 @@ async function bootstrap() {
   app.enableCors();
   await app.listen(process.env.PORT ?? 3000);
 }
+
 bootstrap()
-  .then((res) => {
-    console.log('res', res);
-  })
-  .catch((err) => {
-    console.log('bootstrap err', err);
-  });
+  .then(() => {})
+  .catch(() => {});

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { EventController } from './event.controller';
 import { EventService } from './event.service';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { RedisService } from 'src/redis/redis.service';
@@ -17,7 +17,6 @@ import { RedisService } from 'src/redis/redis.service';
         },
       }),
     }),
-    RedisService,
   ],
   controllers: [EventController],
   providers: [EventService, PrismaService, RedisService],

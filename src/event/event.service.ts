@@ -1,5 +1,10 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { Event as EventModel } from '@prisma/client';
 import {
   CreateEventBodyType,
@@ -11,7 +16,7 @@ import {
   getFirstAndLastDateOfMonth,
 } from 'src/utils/utilities';
 import { RedisService } from 'src/redis/redis.service';
-import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
+// import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 interface AllEventType {
   list: EventModel[];
@@ -31,19 +36,19 @@ export class EventService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly redisService: RedisService,
-    @InjectPinoLogger(EventService.name)
-    private readonly logger: PinoLogger,
+    // @InjectPinoLogger(EventService.name)
+    // private readonly logger: PinoLogger,
   ) {}
 
   async getAllEvents(
+    creatorId: string,
     pageNumber: string,
     pageSize: string,
-    searchQuery: string,
-    creatorId: string,
-    filters: string,
-    sortName: 'asc' | 'desc',
-    sortDate: 'asc' | 'desc',
-    dateFilters: string,
+    searchQuery?: string,
+    filters?: string,
+    sortName?: 'asc' | 'desc',
+    sortDate?: 'asc' | 'desc',
+    dateFilters?: string,
   ): Promise<AllEventType> {
     const searchQueryKey = createQueryKey({
       pageNumber,
@@ -55,8 +60,8 @@ export class EventService {
       sortDate,
       dateFilters,
     });
-    this.logger.error({ id: 'getAllEvents' }, 'get all events');
-    this.logger.info('This is an informational message');
+    // this.logger.error({ id: 'getAllEvents' }, 'get all events');
+    // this.logger.info('This is an informational message');
     const skip = (+Number(pageNumber) - 1) * +Number(pageSize);
     const take = Number(pageSize);
     const whereQuery = {
@@ -153,8 +158,11 @@ export class EventService {
 
       console.log('event', event);
       return event;
-    } catch (error) {
-      throw new HttpException(error.toString(), HttpStatus.BAD_REQUEST);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      }
+      throw new BadRequestException();
     }
   }
 
@@ -168,8 +176,11 @@ export class EventService {
       });
 
       return deletedUser;
-    } catch (error) {
-      throw new HttpException(error.toString(), HttpStatus.BAD_REQUEST);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      }
+      throw new BadRequestException();
     }
   }
 
@@ -201,9 +212,11 @@ export class EventService {
       });
 
       return updatedEvent;
-    } catch (error) {
-      console.log('error', error);
-      throw new HttpException(error.toString(), HttpStatus.BAD_REQUEST);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      }
+      throw new BadRequestException();
     }
   }
 }

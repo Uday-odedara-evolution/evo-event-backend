@@ -1,12 +1,32 @@
-import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import { REDIS_CLIENT } from 'constants/constants';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { Redis } from 'ioredis';
 
-// @Injectable()
-export class RedisService implements OnModuleDestroy {
+@Injectable()
+export class RedisService implements OnModuleDestroy, OnModuleInit {
   private readonly logger = new Logger(RedisService.name);
+  private readonly redis = new Redis({
+    host: '127.0.0.1',
+    port: 6379,
+  });
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
+  constructor() {}
+
+  onModuleInit() {
+    this.redis.on('connect', () => {
+      console.log('connect');
+      this.logger.log('Redis connecting...');
+    });
+
+    // Handle Redis ready events
+    this.redis.on('ready', () => {
+      this.logger.log('Redis connected and ready!');
+    });
+  }
 
   onModuleDestroy() {
     this.logger.log('Disconnecting Redis client...');
@@ -17,8 +37,12 @@ export class RedisService implements OnModuleDestroy {
   async get(prefix: string, key: string): Promise<string | null> {
     try {
       return this.redis.get(`${prefix}:${key}`);
-    } catch (error) {
-      this.logger.error(`Error getting key ${prefix}:${key}: ${error.message}`);
+    } catch (error: unknown) {
+      let errMsg = `Error getting key ${prefix}:${key}:`;
+      if (error instanceof Error) {
+        errMsg += ` ${error?.message}`;
+      }
+      this.logger.error(errMsg);
       throw error;
     }
   }
@@ -26,8 +50,12 @@ export class RedisService implements OnModuleDestroy {
   async set(prefix: string, key: string, value: string): Promise<void> {
     try {
       await this.redis.set(`${prefix}:${key}`, value);
-    } catch (error) {
-      this.logger.error(`Error setting key ${prefix}:${key}: ${error.message}`);
+    } catch (error: unknown) {
+      let errMsg = `Error getting key ${prefix}:${key}:`;
+      if (error instanceof Error) {
+        errMsg += ` ${error?.message}`;
+      }
+      this.logger.error(errMsg);
       throw error;
     }
   }
@@ -35,10 +63,12 @@ export class RedisService implements OnModuleDestroy {
   async delete(prefix: string, key: string): Promise<void> {
     try {
       await this.redis.del(`${prefix}:${key}`);
-    } catch (error) {
-      this.logger.error(
-        `Error deleting key ${prefix}:${key}: ${error.message}`,
-      );
+    } catch (error: unknown) {
+      let errMsg = `Error getting key ${prefix}:${key}:`;
+      if (error instanceof Error) {
+        errMsg += ` ${error?.message}`;
+      }
+      this.logger.error(errMsg);
       throw error;
     }
   }
@@ -51,10 +81,12 @@ export class RedisService implements OnModuleDestroy {
   ): Promise<void> {
     try {
       await this.redis.set(`${prefix}:${key}`, value, 'EX', expiry);
-    } catch (error) {
-      this.logger.error(
-        `Error setting key ${prefix}:${key} with expiry: ${error.message}`,
-      );
+    } catch (error: unknown) {
+      let errMsg = `Error getting key ${prefix}:${key}:`;
+      if (error instanceof Error) {
+        errMsg += ` ${error?.message}`;
+      }
+      this.logger.error(errMsg);
       throw error;
     }
   }

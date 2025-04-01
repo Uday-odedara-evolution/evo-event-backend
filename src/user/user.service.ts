@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -6,8 +7,14 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { User as UserModel } from '@prisma/client';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
+
+interface CreatedUserResult {
+  id: number;
+  email: string;
+  username: string;
+}
 
 @Injectable()
 export class UserService {
@@ -17,12 +24,10 @@ export class UserService {
   ) {}
   async getAllUser(): Promise<UserModel[]> {
     const cachedUser = await this.redisService.get('users', 'all');
-    console.log('cachedUser', cachedUser);
     if (cachedUser) {
       return JSON.parse(cachedUser) as UserModel[];
     }
     const users = await this.prismaService.user.findMany();
-    console.log('users', users);
 
     await this.redisService.set('users', 'all', JSON.stringify(users));
 
@@ -33,7 +38,7 @@ export class UserService {
     email: string,
     password: string,
     username: string,
-  ): Promise<string> {
+  ): Promise<CreatedUserResult> {
     try {
       const user = await this.prismaService.user.create({
         data: {
@@ -42,11 +47,19 @@ export class UserService {
           username,
         },
       });
-      console.log('user', user);
 
-      return 'User created successfully';
-    } catch (error: any) {
-      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+      const result = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      };
+
+      return result;
+    } catch (error: unknown) {
+      if (error instanceof HttpException) {
+        throw new BadRequestException();
+      }
+      throw new HttpException('unknown error', HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -79,12 +92,12 @@ export class UserService {
         throw new UnauthorizedException();
       }
 
-      // const { password, ...result } = user;
-      // TODO: Generate a JWT and return it here
-      // instead of the user object
       return user;
-    } catch (error) {
-      console.log('error', error);
+    } catch (error: unknown) {
+      if (error instanceof HttpException) {
+        throw new NotFoundException();
+      }
+      throw new HttpException('unknown error', HttpStatus.BAD_REQUEST);
     }
   }
 }

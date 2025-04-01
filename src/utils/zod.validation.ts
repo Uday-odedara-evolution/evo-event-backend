@@ -1,17 +1,12 @@
-import {
-  PipeTransform,
-  ArgumentMetadata,
-  BadRequestException,
-} from '@nestjs/common';
+import { PipeTransform, BadRequestException } from '@nestjs/common';
 import { ZodSchema } from 'zod';
 
 export class ZodValidationPipe implements PipeTransform {
   constructor(private schema: ZodSchema) {}
 
-  transform(value: unknown, metadata: ArgumentMetadata) {
-    console.log('value', value);
+  transform(value: string | number) {
     try {
-      const parsedValue = this.schema.parse(value);
+      const parsedValue = this.schema.parse(value) as string | number;
       return parsedValue;
     } catch (error) {
       console.log('zod error', error);
