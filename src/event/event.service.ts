@@ -5,7 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Event as EventModel } from '@prisma/client';
+import { Event as EventModel, Prisma } from '@prisma/client';
 import {
   CreateEventBodyType,
   EventType,
@@ -16,18 +16,12 @@ import {
   getFirstAndLastDateOfMonth,
 } from 'src/utils/utilities';
 import { RedisService } from 'src/redis/redis.service';
+import { EventValidationException } from './exceptions/event-validation.exception';
 // import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 interface AllEventType {
   list: EventModel[];
   totalCount: number;
-}
-
-interface SortDate {
-  event_date: 'asc' | 'desc';
-}
-interface SortName {
-  name: 'asc' | 'desc';
 }
 
 @Injectable()
@@ -40,111 +34,118 @@ export class EventService {
     // private readonly logger: PinoLogger,
   ) {}
 
-  async getAllEvents(
-    creatorId: string,
-    pageNumber: string,
-    pageSize: string,
-    searchQuery?: string,
-    filters?: string,
-    sortName?: 'asc' | 'desc',
-    sortDate?: 'asc' | 'desc',
-    dateFilters?: string,
-  ): Promise<AllEventType> {
-    const searchQueryKey = createQueryKey({
+  async getAllEvents(queries: {
+    creatorId: string;
+    pageNumber: string;
+    pageSize: string;
+    searchQuery?: string;
+    filters?: string;
+    sortName?: string;
+    sortDate?: string;
+    dateFilters?: string;
+  }): Promise<AllEventType> {
+    const {
+      creatorId,
       pageNumber,
       pageSize,
       searchQuery,
-      creatorId,
       filters,
       sortName,
       sortDate,
       dateFilters,
-    });
-    // this.logger.error({ id: 'getAllEvents' }, 'get all events');
-    // this.logger.info('This is an informational message');
-    const skip = (+Number(pageNumber) - 1) * +Number(pageSize);
-    const take = Number(pageSize);
-    const whereQuery = {
-      name: {
-        contains: searchQuery ? searchQuery : undefined,
-      },
-      creator_id: Number(creatorId),
-    };
-    const orderBy: Array<SortDate | SortName> = [];
+    } = queries;
+    try {
+      const searchQueryKey = createQueryKey(queries);
+      // this.logger.error({ id: 'getAllEvents' }, 'get all events');
+      // this.logger.info('This is an informational message');
+      const skip = (+Number(pageNumber) - 1) * +Number(pageSize);
+      const take = Number(pageSize);
+      const whereQuery = {
+        name: {
+          contains: searchQuery ? searchQuery : undefined,
+        },
+        creator_id: Number(creatorId),
+      };
+      const orderBy: Array<Record<string, string>> = [];
 
-    if (sortDate) {
-      orderBy.push({ event_date: sortDate });
-    }
-
-    if (sortName) {
-      orderBy.push({ name: sortName });
-    }
-
-    if (dateFilters) {
-      const datesArr = dateFilters.split(',').map((val) => Number(val));
-
-      if (datesArr.includes(1)) {
-        const [firstDay, lastDay] = getFirstAndLastDateOfMonth(1);
-
-        whereQuery['event_date'] = {
-          lte: new Date(lastDay).toISOString(),
-          gte: new Date(firstDay).toISOString(),
-        };
-      } else if (datesArr.includes(2)) {
-        const [, lastDay] = getFirstAndLastDateOfMonth(6);
-        whereQuery['event_date'] = {
-          lte: new Date(lastDay).toISOString(),
-          gte: new Date().toISOString(),
-        };
+      if (sortDate) {
+        orderBy.push({ event_date: sortDate });
       }
+
+      if (sortName) {
+        orderBy.push({ name: sortName });
+      }
+
+      if (dateFilters) {
+        const datesArr = dateFilters.split(',').map((val) => Number(val));
+
+        if (datesArr.includes(1)) {
+          const [firstDay, lastDay] = getFirstAndLastDateOfMonth(1);
+
+          whereQuery['event_date'] = {
+            lte: new Date(lastDay).toISOString(),
+            gte: new Date(firstDay).toISOString(),
+          };
+        } else if (datesArr.includes(2)) {
+          const [, lastDay] = getFirstAndLastDateOfMonth(6);
+          whereQuery['event_date'] = {
+            lte: new Date(lastDay).toISOString(),
+            gte: new Date().toISOString(),
+          };
+        }
+      }
+
+      if (filters) {
+        const filterArr = filters.split(',').map((val) => Number(val));
+        whereQuery['event_category_id'] = { in: filterArr };
+      }
+
+      const cashedEvents = await this.redisService.get(
+        'events',
+        searchQueryKey,
+      );
+
+      if (cashedEvents) {
+        return JSON.parse(cashedEvents) as AllEventType;
+      }
+
+      const [list, totalCount] = await this.prismaService.$transaction([
+        this.prismaService.event.findMany({
+          skip,
+          take,
+          where: whereQuery,
+          orderBy: orderBy,
+        }),
+        this.prismaService.event.count({
+          where: whereQuery,
+          orderBy: orderBy,
+        }),
+      ]);
+
+      const result = {
+        list,
+        totalCount,
+      };
+
+      await this.redisService.set(
+        'events',
+        searchQueryKey,
+        JSON.stringify(result),
+      );
+
+      return result;
+    } catch (error: unknown) {
+      if (error instanceof Prisma.PrismaClientValidationError) {
+        throw new EventValidationException();
+      }
+      throw new HttpException('unknown error', HttpStatus.BAD_REQUEST);
     }
-
-    if (filters) {
-      const filterArr = filters.split(',').map((val) => Number(val));
-      whereQuery['event_category_id'] = { in: filterArr };
-    }
-
-    const cashedEvents = await this.redisService.get('events', searchQueryKey);
-
-    if (cashedEvents) {
-      console.log('fetched from cache');
-      return JSON.parse(cashedEvents) as AllEventType;
-    }
-
-    const [list, totalCount] = await this.prismaService.$transaction([
-      this.prismaService.event.findMany({
-        skip,
-        take,
-        where: whereQuery,
-        orderBy: orderBy,
-      }),
-      this.prismaService.event.count({
-        where: whereQuery,
-        orderBy: orderBy,
-      }),
-    ]);
-
-    const result = {
-      list,
-      totalCount,
-    };
-    console.log('fetched from db');
-
-    await this.redisService.set(
-      'events',
-      searchQueryKey,
-      JSON.stringify(result),
-    );
-
-    return result;
   }
 
   async addEvent(
     filename: string,
     details: CreateEventBodyType,
   ): Promise<EventType> {
-    console.log('details', details);
-    console.log('converted', new Date(details.date));
     try {
       const event = await this.prismaService.event.create({
         data: {
@@ -156,7 +157,6 @@ export class EventService {
         },
       });
 
-      console.log('event', event);
       return event;
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -167,11 +167,10 @@ export class EventService {
   }
 
   async deleteById(id: number): Promise<EventType> {
-    console.log('id', id);
     try {
       const deletedUser = await this.prismaService.event.delete({
         where: {
-          id: id,
+          id,
         },
       });
 

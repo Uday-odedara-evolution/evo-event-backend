@@ -3,6 +3,7 @@ import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import eslintNestJs from '@darraghor/eslint-plugin-nestjs-typed';
 
 export default tseslint.config(
   {
@@ -11,6 +12,7 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   eslintPluginPrettierRecommended,
+  eslintNestJs.configs.flatRecommended,
   {
     languageOptions: {
       globals: {
@@ -31,6 +33,7 @@ export default tseslint.config(
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
       'linebreak-style': ['error', 'unix'],
+      'no-console': 'error',
     },
   },
 );

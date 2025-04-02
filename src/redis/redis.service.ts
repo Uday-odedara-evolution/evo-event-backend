@@ -1,12 +1,6 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Redis } from 'ioredis';
 
-@Injectable()
 export class RedisService implements OnModuleDestroy, OnModuleInit {
   private readonly logger = new Logger(RedisService.name);
   private readonly redis = new Redis({
@@ -18,7 +12,6 @@ export class RedisService implements OnModuleDestroy, OnModuleInit {
 
   onModuleInit() {
     this.redis.on('connect', () => {
-      console.log('connect');
       this.logger.log('Redis connecting...');
     });
 

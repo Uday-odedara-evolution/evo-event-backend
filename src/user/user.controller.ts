@@ -9,7 +9,7 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDTO } from './dto/user.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
-import { ApiBody, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { User } from '@prisma/client';
 
 interface CreatedUserResult {
@@ -19,6 +19,7 @@ interface CreatedUserResult {
 }
 
 @Controller('user')
+@ApiTags('User')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

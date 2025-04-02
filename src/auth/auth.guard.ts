@@ -1,6 +1,8 @@
 import {
   CanActivate,
   ExecutionContext,
+  HttpException,
+  HttpStatus,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -31,7 +33,6 @@ export class AuthGuard implements CanActivate {
       .switchToHttp()
       .getRequest();
     const token = this.extractTokenFromHeader(request);
-    console.log('token', token);
     if (!token) {
       throw new UnauthorizedException();
     }
@@ -43,12 +44,13 @@ export class AuthGuard implements CanActivate {
           secret: jwtConstants.secret,
         },
       );
-      console.log('payload', payload);
 
       request['user'] = payload;
-    } catch (error) {
-      console.log('error', error);
-      throw new UnauthorizedException();
+    } catch (error: unknown) {
+      if (error instanceof HttpException) {
+        throw new HttpException(error, HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException('unknown error', HttpStatus.BAD_REQUEST);
     }
 
     return true;

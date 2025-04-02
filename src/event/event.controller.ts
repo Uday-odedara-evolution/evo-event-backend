@@ -21,13 +21,16 @@ import {
   createEventSchema,
   deleteEventSchema,
   updateEventSchema,
+  GetEventDto,
+  getEventsSchema,
 } from './dto/event.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileValidationPipe } from 'src/utils/file.validation';
-import { ApiBody, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @Controller('event')
+@ApiTags('Events')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
@@ -80,26 +83,12 @@ export class EventController {
       totalCount: 13,
     },
   })
-  getAllPost(
-    @Query('creatorId') creatorId: string,
-    @Query('pageSize') pageSize: string,
-    @Query('pageNumber') pageNumber: string,
-    @Query('searchQuery') searchQuery?: string,
-    @Query('filters') filters?: string,
-    @Query('dFilters') dFilters?: string,
-    @Query('sortName') sortName?: 'asc' | 'desc',
-    @Query('sortDate') sortDate?: 'asc' | 'desc',
-  ): Promise<any> {
-    return this.eventService.getAllEvents(
-      creatorId,
-      pageNumber,
-      pageSize,
-      searchQuery,
-      filters,
-      sortName,
-      sortDate,
-      dFilters,
-    );
+  @UsePipes(new ZodValidationPipe(getEventsSchema))
+  getAllPost(@Query() query: GetEventDto): Promise<any> {
+    return this.eventService.getAllEvents({
+      ...query,
+      dateFilters: query.dFilters,
+    });
   }
 
   @Public()
@@ -154,8 +143,10 @@ export class EventController {
       image_url: '1743403897088-daryan-shamkhali-PACD5oSMko8-unsplash.jpg',
     },
   })
-  @UsePipes(new ZodValidationPipe(deleteEventSchema))
-  deleteEvent(@Param('id') deleteEventDto: DeleteEventDto) {
+  deleteEvent(
+    @Param('id', new ZodValidationPipe(deleteEventSchema))
+    deleteEventDto: DeleteEventDto,
+  ) {
     return this.eventService.deleteById(deleteEventDto);
   }
 

@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { RedisService } from 'src/redis/redis.service';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
-  imports: [],
-  providers: [UserService, PrismaService, RedisService],
+  imports: [RedisModule],
+  providers: [UserService, PrismaService],
   controllers: [UserController],
   exports: [UserService],
 })
