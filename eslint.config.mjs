@@ -28,10 +28,17 @@ export default tseslint.config(
     },
   },
   {
+    plugins: { ['@typescript-eslint']: tseslint.plugin },
+    extends: [
+      tseslint.configs.strictTypeChecked,
+      tseslint.configs.stylisticTypeChecked,
+    ],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-extraneous-class': 'off',
+      '@typescript-eslint/no-unnecessary-type-parameters': 'off',
       'linebreak-style': ['error', 'unix'],
       'no-console': 'error',
     },

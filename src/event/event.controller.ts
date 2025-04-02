@@ -28,6 +28,13 @@ import { Public } from 'src/auth/decorators/public.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileValidationPipe } from 'src/utils/file.validation';
 import { ApiBody, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { EventType } from './type/event.type';
+import { Event as EventModel } from '@prisma/client';
+
+interface AllEventType {
+  list: EventModel[];
+  totalCount: number;
+}
 
 @Controller('event')
 @ApiTags('Events')
@@ -84,7 +91,7 @@ export class EventController {
     },
   })
   @UsePipes(new ZodValidationPipe(getEventsSchema))
-  getAllPost(@Query() query: GetEventDto): Promise<any> {
+  getAllPost(@Query() query: GetEventDto): Promise<AllEventType> {
     return this.eventService.getAllEvents({
       ...query,
       dateFilters: query.dFilters,
@@ -121,8 +128,8 @@ export class EventController {
     @Body(new ZodValidationPipe(createEventSchema))
     createEventDto: CreateEventDto,
     @UploadedFile(new FileValidationPipe()) file: Express.Multer.File,
-  ): Promise<any> {
-    if (!file) {
+  ): Promise<EventType> {
+    if (!file.filename) {
       throw new NotFoundException('file error');
     }
 
@@ -182,7 +189,7 @@ export class EventController {
     updateEventDto: UpdateEventDto,
     @UploadedFile(new FileValidationPipe())
     file: Express.Multer.File,
-  ): Promise<any> {
+  ): Promise<EventType> {
     return this.eventService.updateEvent(file.filename, updateEventDto);
   }
 }

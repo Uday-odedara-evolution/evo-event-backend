@@ -8,8 +8,6 @@ export class RedisService implements OnModuleDestroy, OnModuleInit {
     port: 6379,
   });
 
-  constructor() {}
-
   onModuleInit() {
     this.redis.on('connect', () => {
       this.logger.log('Redis connecting...');
@@ -29,11 +27,11 @@ export class RedisService implements OnModuleDestroy, OnModuleInit {
 
   async get(prefix: string, key: string): Promise<string | null> {
     try {
-      return this.redis.get(`${prefix}:${key}`);
+      return await this.redis.get(`${prefix}:${key}`);
     } catch (error: unknown) {
       let errMsg = `Error getting key ${prefix}:${key}:`;
       if (error instanceof Error) {
-        errMsg += ` ${error?.message}`;
+        errMsg += ` ${error.message}`;
       }
       this.logger.error(errMsg);
       throw error;
@@ -46,7 +44,7 @@ export class RedisService implements OnModuleDestroy, OnModuleInit {
     } catch (error: unknown) {
       let errMsg = `Error getting key ${prefix}:${key}:`;
       if (error instanceof Error) {
-        errMsg += ` ${error?.message}`;
+        errMsg += ` ${error.message}`;
       }
       this.logger.error(errMsg);
       throw error;
@@ -59,7 +57,7 @@ export class RedisService implements OnModuleDestroy, OnModuleInit {
     } catch (error: unknown) {
       let errMsg = `Error getting key ${prefix}:${key}:`;
       if (error instanceof Error) {
-        errMsg += ` ${error?.message}`;
+        errMsg += ` ${error.message}`;
       }
       this.logger.error(errMsg);
       throw error;
@@ -77,7 +75,7 @@ export class RedisService implements OnModuleDestroy, OnModuleInit {
     } catch (error: unknown) {
       let errMsg = `Error getting key ${prefix}:${key}:`;
       if (error instanceof Error) {
-        errMsg += ` ${error?.message}`;
+        errMsg += ` ${error.message}`;
       }
       this.logger.error(errMsg);
       throw error;

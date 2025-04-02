@@ -24,14 +24,14 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('Check cred');
     }
-    if (user?.password !== password) {
+    if (user.password !== password) {
       throw new UnauthorizedException();
     }
 
     const payload = {
-      userId: user?.id,
+      userId: user.id,
       username: user.username,
-      email: user?.email,
+      email: user.email,
     };
 
     return {

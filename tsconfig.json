@@ -1,5 +1,12 @@
 {
   "compilerOptions": {
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "module": "commonjs",
     "declaration": true,
     "removeComments": true,

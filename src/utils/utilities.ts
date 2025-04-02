@@ -10,14 +10,14 @@ export const changeDateFormat = (value: Date) => {
   return `${year}-${getZeroPrefix(month)}-${getZeroPrefix(date)}`;
 };
 
-export const getZeroPrefix = (val) => {
+export const getZeroPrefix = (val: string) => {
   const digit = Number(val);
-  return digit > 9 ? `${digit}` : `0${digit}`;
+  return digit > 9 ? digit.toString() : `0${digit.toString()}`;
 };
 
-export const createQueryKey = (obj: Record<string, any>) => {
+export const createQueryKey = (obj: Record<string, string>) => {
   let result = '';
-  Object.entries(obj).map(([key, value]) => {
+  Object.entries(obj).forEach(([key, value]) => {
     if (value) {
       result += `${key}:${value}-`;
     }

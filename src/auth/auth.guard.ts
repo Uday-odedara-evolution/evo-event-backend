@@ -45,6 +45,7 @@ export class AuthGuard implements CanActivate {
         },
       );
 
+      // eslint-disable-next-line @typescript-eslint/dot-notation
       request['user'] = payload;
     } catch (error: unknown) {
       if (error instanceof HttpException) {

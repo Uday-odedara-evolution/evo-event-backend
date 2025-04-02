@@ -11,8 +11,8 @@ import { RedisService } from 'src/redis/redis.service';
     MulterModule.register({
       storage: diskStorage({
         destination: './uploads',
-        filename: (req, file, cb) => {
-          const filename = `${Date.now()}-${file.originalname.replace(' ', '')}`;
+        filename: (_, file, cb) => {
+          const filename = `${Date.now().toString()}-${file.originalname.replace(' ', '')}`;
           cb(null, filename);
         },
       }),

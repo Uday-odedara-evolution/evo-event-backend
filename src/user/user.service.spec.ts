@@ -38,7 +38,9 @@ describe('UserService', () => {
         NotFoundException,
       );
     });
+  });
 
+  describe('Fetch all users', () => {
     it('should give the list of all users', async () => {
       const users = await service.getAllUser();
       expect(users.length).toBeGreaterThan(0);

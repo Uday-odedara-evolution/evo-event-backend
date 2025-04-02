@@ -17,7 +17,6 @@ import {
 } from 'src/utils/utilities';
 import { RedisService } from 'src/redis/redis.service';
 import { EventValidationException } from './exceptions/event-validation.exception';
-// import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 interface AllEventType {
   list: EventModel[];
@@ -56,17 +55,21 @@ export class EventService {
     } = queries;
     try {
       const searchQueryKey = createQueryKey(queries);
-      // this.logger.error({ id: 'getAllEvents' }, 'get all events');
-      // this.logger.info('This is an informational message');
       const skip = (+Number(pageNumber) - 1) * +Number(pageSize);
       const take = Number(pageSize);
-      const whereQuery = {
+
+      type EventWhereQuery = Prisma.Args<
+        typeof this.prismaService.event,
+        'findMany'
+      >['where'];
+
+      const whereQuery: EventWhereQuery = {
         name: {
-          contains: searchQuery ? searchQuery : undefined,
+          contains: searchQuery ?? undefined,
         },
         creator_id: Number(creatorId),
       };
-      const orderBy: Array<Record<string, string>> = [];
+      const orderBy: Record<string, string>[] = [];
 
       if (sortDate) {
         orderBy.push({ event_date: sortDate });
@@ -82,13 +85,13 @@ export class EventService {
         if (datesArr.includes(1)) {
           const [firstDay, lastDay] = getFirstAndLastDateOfMonth(1);
 
-          whereQuery['event_date'] = {
+          whereQuery.event_date = {
             lte: new Date(lastDay).toISOString(),
             gte: new Date(firstDay).toISOString(),
           };
         } else if (datesArr.includes(2)) {
           const [, lastDay] = getFirstAndLastDateOfMonth(6);
-          whereQuery['event_date'] = {
+          whereQuery.event_date = {
             lte: new Date(lastDay).toISOString(),
             gte: new Date().toISOString(),
           };
@@ -97,7 +100,7 @@ export class EventService {
 
       if (filters) {
         const filterArr = filters.split(',').map((val) => Number(val));
-        whereQuery['event_category_id'] = { in: filterArr };
+        whereQuery.event_category_id = { in: filterArr };
       }
 
       const cashedEvents = await this.redisService.get(
@@ -188,19 +191,24 @@ export class EventService {
     details: UpdateEventBodyType,
   ): Promise<EventType> {
     try {
-      const data = {};
+      type EventUpdateData = Prisma.Args<
+        typeof this.prismaService.event,
+        'update'
+      >['data'];
+
+      const data: EventUpdateData = {};
 
       if (details.date) {
-        data['event_date'] = new Date(details.date);
+        data.event_date = new Date(details.date);
       }
       if (details.name) {
-        data['name'] = details.name;
+        data.name = details.name;
       }
       if (details.categoryId) {
-        data['event_category_id'] = details.categoryId;
+        data.event_category_id = details.categoryId;
       }
       if (filename) {
-        data['image_url'] = filename;
+        data.image_url = filename;
       }
 
       const updatedEvent = await this.prismaService.event.update({
