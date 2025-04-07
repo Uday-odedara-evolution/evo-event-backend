@@ -17,6 +17,7 @@ import {
 } from 'src/utils/utilities';
 import { RedisService } from 'src/redis/redis.service';
 import { EventValidationException } from './exceptions/event-validation.exception';
+import { WinstonLogger } from 'src/config/winston.logger';
 
 interface AllEventType {
   list: EventModel[];
@@ -26,11 +27,11 @@ interface AllEventType {
 @Injectable()
 export class EventService {
   // private readonly logger = new Logger(EventService.name);
+  private readonly winstonLogger = new WinstonLogger();
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly redisService: RedisService,
-    // @InjectPinoLogger(EventService.name)
-    // private readonly logger: PinoLogger,
   ) {}
 
   async getAllEvents(queries: {
@@ -57,6 +58,10 @@ export class EventService {
       const searchQueryKey = createQueryKey(queries);
       const skip = (+Number(pageNumber) - 1) * +Number(pageSize);
       const take = Number(pageSize);
+
+      this.winstonLogger.info(
+        `get all events with params -> ${searchQueryKey}`,
+      );
 
       type EventWhereQuery = Prisma.Args<
         typeof this.prismaService.event,

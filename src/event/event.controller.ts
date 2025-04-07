@@ -30,7 +30,7 @@ import { FileValidationPipe } from 'src/utils/file.validation';
 import { ApiBody, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { EventType } from './type/event.type';
 import { Event as EventModel } from '@prisma/client';
-
+import { WinstonLogger } from 'src/config/winston.logger';
 interface AllEventType {
   list: EventModel[];
   totalCount: number;
@@ -39,6 +39,7 @@ interface AllEventType {
 @Controller('event')
 @ApiTags('Events')
 export class EventController {
+  private readonly winstonLogger = new WinstonLogger();
   constructor(private readonly eventService: EventService) {}
 
   @Public()
@@ -92,6 +93,7 @@ export class EventController {
   })
   @UsePipes(new ZodValidationPipe(getEventsSchema))
   getAllPost(@Query() query: GetEventDto): Promise<AllEventType> {
+    this.winstonLogger.info(`get all events: ${JSON.stringify(query)}`);
     return this.eventService.getAllEvents({
       ...query,
       dateFilters: query.dFilters,
