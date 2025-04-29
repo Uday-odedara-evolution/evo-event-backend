@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { UserModule } from './user.module';
-import { NotFoundException } from '@nestjs/common';
 
 describe('UserService', () => {
   let service: UserService;
@@ -21,7 +20,7 @@ describe('UserService', () => {
   describe('sign in user', () => {
     it('should return user details', async () => {
       const existingUser = {
-        email: 'test@gmail.com',
+        email: 'uday.o@evolutioncloud.in',
         password: '123',
       };
 
@@ -34,8 +33,8 @@ describe('UserService', () => {
     });
 
     it('should throw NotFoundException if the user not exists', async () => {
-      await expect(service.findUser('abcd', '123')).rejects.toThrow(
-        NotFoundException,
+      await expect(service.findUser('abcd@gmail.com', '123')).resolves.toBe(
+        null,
       );
     });
   });

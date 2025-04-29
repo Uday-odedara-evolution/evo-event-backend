@@ -4,17 +4,11 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { User as UserModel } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
-
-interface CreatedUserResult {
-  id: number;
-  email: string;
-  username: string;
-}
+import { NewUser } from './user.interface';
 
 @Injectable()
 export class UserService {
@@ -38,7 +32,7 @@ export class UserService {
     email: string,
     password: string,
     username: string,
-  ): Promise<CreatedUserResult> {
+  ): Promise<NewUser> {
     try {
       const user = await this.prismaService.user.create({
         data: {
@@ -52,6 +46,7 @@ export class UserService {
         id: user.id,
         username: user.username,
         email: user.email,
+        isEmailVerified: user.is_email_verified,
       };
 
       return result;
@@ -59,23 +54,14 @@ export class UserService {
       if (error instanceof HttpException) {
         throw new BadRequestException();
       }
-      throw new HttpException('unknown error', HttpStatus.BAD_REQUEST);
+      if (error && typeof error === 'object' && 'message' in error) {
+        throw new HttpException(error.message ?? '', HttpStatus.BAD_REQUEST);
+      }
+      throw new BadRequestException();
     }
   }
 
-  async findUser(
-    email: string,
-    pass: string,
-  ): Promise<
-    | {
-        password: string;
-        id: number;
-        username: string;
-        email: string;
-      }
-    | null
-    | undefined
-  > {
+  async findUser(email: string, pass: string): Promise<UserModel | null> {
     try {
       const user = await this.prismaService.user.findUnique({
         where: {
@@ -84,14 +70,6 @@ export class UserService {
         },
       });
 
-      if (!user) {
-        throw new NotFoundException();
-      }
-
-      if (user.password !== pass) {
-        throw new UnauthorizedException();
-      }
-
       return user;
     } catch (error: unknown) {
       if (error instanceof HttpException) {
@@ -99,5 +77,28 @@ export class UserService {
       }
       throw new HttpException('unknown error', HttpStatus.BAD_REQUEST);
     }
+  }
+
+  async findByEmail(email: string): Promise<UserModel | null> {
+    try {
+      const user = await this.prismaService.user.findUnique({
+        where: { email },
+      });
+
+      return user;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log('Error while finding user by email', error);
+      throw new BadRequestException('Error while finding user by email');
+    }
+  }
+
+  async markEmailAsConfirmed(email: string) {
+    const user = await this.prismaService.user.update({
+      where: { email },
+      data: { is_email_verified: true },
+    });
+
+    return user;
   }
 }

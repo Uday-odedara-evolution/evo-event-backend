@@ -1,42 +1,25 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
+import { NewUser } from 'src/user/user.interface';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private userService: UserService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
-  async signIn(
-    email: string,
-    password: string,
-  ): Promise<{
-    access_token: string;
-    data: { userId: number; username: string };
-  }> {
+  async signIn(email: string, password: string): Promise<NewUser> {
     const user = await this.userService.findUser(email, password);
+
     if (!user) {
-      throw new NotFoundException('Check cred');
-    }
-    if (user.password !== password) {
-      throw new UnauthorizedException();
+      throw new NotFoundException();
     }
 
     const payload = {
-      userId: user.id,
+      id: user.id,
       username: user.username,
       email: user.email,
+      isEmailVerified: user.is_email_verified,
     };
 
-    return {
-      access_token: await this.jwtService.signAsync(payload),
-      data: payload,
-    };
+    return payload;
   }
 }

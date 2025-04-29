@@ -32,7 +32,7 @@ describe('AuthService', () => {
   describe('sign in user', () => {
     it('should return user details', async () => {
       const existingUser = {
-        email: 'test@gmail.com',
+        email: 'uday.o@evolutioncloud.in',
         password: '123',
       };
 
@@ -41,11 +41,11 @@ describe('AuthService', () => {
         existingUser.password,
       );
 
-      expect(result).toHaveProperty('access_token');
+      expect(result).toHaveProperty('isEmailVerified');
     });
 
     it('should throw NotFoundException if the user not exists', async () => {
-      await expect(service.signIn('abcd', '123')).rejects.toThrow(
+      await expect(service.signIn('abcd@gmail.com', '123')).rejects.toThrow(
         NotFoundException,
       );
     });

@@ -69,7 +69,7 @@ export class EventService {
         },
         creator_id: Number(creatorId),
       };
-      const orderBy: Record<string, string>[] = [];
+      const orderBy: Record<string, string>[] = [{ id: 'desc' }];
 
       if (sortDate) {
         orderBy.push({ event_date: sortDate });

@@ -27,12 +27,10 @@ describe('AuthController', () => {
   describe('login controller', () => {
     it('should give you user details with access token', async () => {
       const result = {
-        access_token: 'testAccessToken',
-        data: {
-          userId: 1,
-          email: 'uday',
-          username: 'uday',
-        },
+        id: 1,
+        email: 'test@gmail.com',
+        username: 'uday',
+        isEmailVerified: false,
       };
 
       jest.spyOn(service, 'signIn').mockResolvedValue(result);
