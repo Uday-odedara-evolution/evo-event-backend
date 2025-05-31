@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   HttpException,
   HttpStatus,
@@ -100,5 +101,16 @@ export class UserService {
     });
 
     return user;
+  }
+
+  async updatePassword(email: string, password: string) {
+    try {
+      await this.prismaService.user.update({
+        where: { email },
+        data: { password },
+      });
+    } catch (error) {
+      throw new BadGatewayException(error);
+    }
   }
 }

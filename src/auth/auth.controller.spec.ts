@@ -5,6 +5,9 @@ import { AuthService } from './auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 import { UserService } from 'src/user/user.service';
+import { EmailService } from 'src/email/email.service';
+import { EmailModule } from 'src/email/email.module';
+import { UserModule } from 'src/user/user.module';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -12,8 +15,14 @@ describe('AuthController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [AuthModule],
-      providers: [AuthService, UserService, PrismaService, RedisService],
+      imports: [AuthModule, EmailModule, UserModule],
+      providers: [
+        AuthService,
+        UserService,
+        PrismaService,
+        RedisService,
+        EmailService,
+      ],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);

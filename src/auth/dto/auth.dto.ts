@@ -22,4 +22,19 @@ export const verifyTokenSchema = z
   })
   .required();
 
+export const forgotPasswordSchema = z
+  .object({
+    email: z.string().email({ message: 'Enter a valid email' }),
+  })
+  .required();
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string({ message: 'Token is required to reset password' }),
+    password: z.string({ message: 'Password is required' }),
+  })
+  .required();
+
 export type VerifyTokenDto = z.infer<typeof verifyTokenSchema>;
+export type ForgotPasswordDto = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>;

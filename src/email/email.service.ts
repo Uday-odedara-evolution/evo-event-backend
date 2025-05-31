@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { Mail } from './email.interface';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { NewUser } from 'src/user/user.interface';
@@ -30,8 +29,8 @@ export class EmailService {
     return { jobId: job.id };
   }
 
-  async sendResetPasswordEmail(data: Mail) {
-    const job = await this.emailQueue.add('reset-password', { data });
+  async sendResetPasswordEmail(email: string) {
+    const job = await this.emailQueue.add('reset-password', { email });
 
     return { jobId: job.id };
   }
@@ -54,15 +53,7 @@ export class EmailService {
 
       throw new BadRequestException();
     } catch (error) {
-      if (
-        error &&
-        typeof error === 'object' &&
-        'name' in error &&
-        error.name === 'TokenExpiredError'
-      ) {
-        throw new BadRequestException('Email confirmation token expired');
-      }
-      throw new BadRequestException('Bad confirmation token');
+      throw new BadRequestException(error);
     }
   }
 

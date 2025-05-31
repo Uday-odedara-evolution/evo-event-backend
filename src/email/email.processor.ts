@@ -77,7 +77,33 @@ export class EmailProcessor {
     }
   }
 
-  // async sendResetPasswordEmail(job: Job<Mail>) {
-  //   const { data } = job;
-  // }
+  @Process('reset-password')
+  async sendResetPasswordEmail(job: Job<{ email: string }>) {
+    try {
+      const { data } = job;
+      const payload = { email: data.email };
+
+      const token = this.jwtService.sign(payload, {
+        secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
+        expiresIn: this.configService.get(
+          'JWT_VERIFICATION_TOKEN_EXPIRATION_TIME',
+        ),
+      });
+
+      const url = `${process.env.EMAIL_RESET_PASSWORD_URL ?? ''}?token=${token}`;
+
+      await this.mailService.sendMail({
+        to: data.email,
+        from: 'testing@evolutioncloud.in',
+        subject: 'Reset Password',
+        template: 'reset-password',
+        context: {
+          link: url,
+        },
+      });
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log('Error while sending reset password link', error);
+    }
+  }
 }

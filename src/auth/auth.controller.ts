@@ -5,13 +5,23 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
+  NotFoundException,
   Post,
+  Put,
   UsePipes,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './decorators/public.decorator';
 import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { SignInDto, VerifyTokenDto, verifyTokenSchema } from './dto/auth.dto';
+import {
+  ForgotPasswordDto,
+  forgotPasswordSchema,
+  ResetPasswordDto,
+  resetPasswordSchema,
+  SignInDto,
+  VerifyTokenDto,
+  verifyTokenSchema,
+} from './dto/auth.dto';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from 'src/email/email.service';
 import { ZodValidationPipe } from 'src/utils/zod.validation';
@@ -127,5 +137,39 @@ export class AuthController {
       confirmationData.token,
     );
     return await this.emailService.verifyEmail(email);
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @ApiResponse({
+    status: 200,
+    description: 'The reset password link has been sent to users email address',
+    type: 'string',
+  })
+  @HttpCode(200)
+  @UsePipes(new ZodValidationPipe(forgotPasswordSchema))
+  async forgotPassword(@Body() data: ForgotPasswordDto) {
+    const user = await this.userService.findByEmail(data.email);
+
+    if (!user) {
+      throw new NotFoundException(`No user found for email: ${data.email}`);
+    }
+
+    await this.emailService.sendResetPasswordEmail(data.email);
+
+    return { message: 'Forgot password link sent' };
+  }
+
+  @Public()
+  @Put('reset-password')
+  @ApiResponse({
+    status: 200,
+    description: 'The password has been reset successfully',
+    type: 'string',
+  })
+  @HttpCode(200)
+  @UsePipes(new ZodValidationPipe(resetPasswordSchema))
+  async resetPassword(@Body() data: ResetPasswordDto) {
+    return await this.authService.resetPassword(data);
   }
 }
